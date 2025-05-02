@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: to-converter
+    env: python
+    buildCommand: ""
+    startCommand: python app_to_converter.py
+    plan: free
