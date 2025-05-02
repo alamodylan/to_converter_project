@@ -1,4 +1,4 @@
-# app_to_converter.py - Proyecto completo con depuración añadida
+# app_to_converter.py - Proyecto completo con ajuste de encabezado
 
 from flask import Flask, render_template_string, request, send_file, redirect, url_for
 import pandas as pd
@@ -63,8 +63,8 @@ EXTRA_COSTOS_LIST = [
 ]
 
 def clasificar_to(fila):
-    ruta = str(fila.get("Unnamed: 10", "")).strip()
-    tipo_serv = str(fila.get("Unnamed: 2", "")).strip()
+    ruta = str(fila.get("Ruta", "")).strip()
+    tipo_serv = str(fila.get("Tipo Servicio", "")).strip()
 
     if ruta.startswith("CAL") and tipo_serv in EXPORT_SERVICIOS:
         return "TO Exportación Caldera"
@@ -87,16 +87,8 @@ def index():
         if not file:
             return redirect(url_for('index'))
 
-        df = pd.read_excel(file)
-        print("Columnas detectadas:", df.columns.tolist())
-
-        if "Tipo" not in df.columns:
-            df = df.iloc[1:]
-            df.columns = df.iloc[0]
-            df = df[1:]
-
-        print("Columnas tras limpieza:", df.columns.tolist())
-        print("Cantidad de filas:", len(df))
+        df = pd.read_excel(file, header=1)
+        print("Columnas cargadas:", df.columns.tolist())
 
         df['CUADRO TO'] = df.apply(clasificar_to, axis=1)
 
