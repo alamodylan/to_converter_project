@@ -1,4 +1,4 @@
-# app_to_converter.py - Proyecto completo con ajuste de encabezado
+# app_to_converter.py - Proyecto completo con ajuste de encabezado y columna de FECHA DE COLOCACIÓN
 
 from flask import Flask, render_template_string, request, send_file, redirect, url_for
 import pandas as pd
@@ -106,7 +106,7 @@ def index():
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
                     "MONTO TOTAL $": 0,
-                    "FECHA DE COLOCACIÓN": x.iloc[0]["Fecha y Hora Llegada"]
+                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"]).date()
                 })).reset_index()
 
                 resumen["MONTO TOTAL $"] = resumen[[
@@ -115,11 +115,12 @@ def index():
 
                 resumen.insert(0, "CLIENTE", "")
                 resumen.insert(2, "TAMAÑO", "")
+                resumen.insert(3, "FECHA DE COLOCACIÓN", resumen.pop("FECHA DE COLOCACIÓN"))
                 resumen["COMENTARIOS TTA"] = ""
                 resumen["COMENTARIOS MSC"] = ""
 
                 cols_finales = [
-                    "CLIENTE", "BL o BOOKING", "TAMAÑO", "Contenedor", "PUERTO DE SALIDA",
+                    "CLIENTE", "BL o BOOKING", "TAMAÑO", "FECHA DE COLOCACIÓN", "Contenedor", "PUERTO DE SALIDA",
                     "DIRECCIÓN DE COLOCACIÓN", "ENTREGA DE VACIO", "COSTO FLETE $",
                     "3 EJES $", "PATIO DE RETIRO $", "RETORNO $", "EXTRA COSTOS $", "MONTO TOTAL $",
                     "COMENTARIOS TTA", "COMENTARIOS MSC"
