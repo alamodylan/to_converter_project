@@ -1,4 +1,4 @@
-# app_to_converter.py - Proyecto completo con toda la lógica integrada
+# app_to_converter.py - Proyecto completo con depuración añadida
 
 from flask import Flask, render_template_string, request, send_file, redirect, url_for
 import pandas as pd
@@ -88,16 +88,21 @@ def index():
             return redirect(url_for('index'))
 
         df = pd.read_excel(file)
-        df = df.iloc[1:]  # Eliminar encabezados extras
-        df.columns = df.iloc[0]
-        df = df[1:]
+        print("Columnas detectadas:", df.columns.tolist())
+
+        if "Tipo" not in df.columns:
+            df = df.iloc[1:]
+            df.columns = df.iloc[0]
+            df = df[1:]
+
+        print("Columnas tras limpieza:", df.columns.tolist())
+        print("Cantidad de filas:", len(df))
 
         df['CUADRO TO'] = df.apply(clasificar_to, axis=1)
 
         for grupo in df['CUADRO TO'].dropna().unique():
             df_grupo = df[df['CUADRO TO'] == grupo]
             if not df_grupo.empty:
-                contenedor_col = df_grupo.columns.get_loc("Contenedor")
                 resumen = df_grupo.groupby("Contenedor").apply(lambda x: pd.Series({
                     "BL o BOOKING": extraer_booking(x),
                     "PUERTO DE SALIDA": x.iloc[0]["Origen"],
@@ -141,7 +146,6 @@ def download_file(filename):
     path = os.path.join("outputs", filename)
     return send_file(path, as_attachment=True)
 
-# Funciones auxiliares (simples por ahora, se expanden según reglas reales)
 def extraer_booking(df):
     notas = df["Notas"].astype(str).tolist()
     for nota in notas:
@@ -175,4 +179,3 @@ def obtener_extra_costos(df):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
