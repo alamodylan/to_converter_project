@@ -109,7 +109,7 @@ def index():
                     "DIRECCIÓN DE COLOCACIÓN": x.iloc[0]["Ubicación Final"],
                     "ENTREGA DE VACIO": obtener_entrega_vacio(x),
                     "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="Retira vacio export"),
-                    "PATIO DE RETIRO $": obtener_patio_retiro(x),
+                    "PATIO DE RETIRO $": obtener_monto(x, tipo="Guía", servicio="Retira vacio export"),
                     "3 EJES $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes"),
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
@@ -135,6 +135,7 @@ def index():
                 ]
 
                 resumen = resumen[cols_finales]
+                resumen = resumen.sort_values(by="FECHA DE COLOCACIÓN", ascending=True)
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 nombre_archivo = f"outputs/{grupo.replace(' ', '_')}_{timestamp}.xlsx"
                 with pd.ExcelWriter(nombre_archivo, engine='xlsxwriter') as writer:
