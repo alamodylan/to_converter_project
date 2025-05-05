@@ -130,7 +130,37 @@ def index():
                 resumen = resumen[cols_finales]
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 nombre_archivo = f"outputs/{grupo.replace(' ', '_')}_{timestamp}.xlsx"
-                resumen.to_excel(nombre_archivo, index=False)
+                with pd.ExcelWriter(nombre_archivo, engine='xlsxwriter') as writer:
+                resumen.to_excel(writer, index=False, sheet_name='TO')
+                workbook = writer.book
+                worksheet = writer.sheets['TO']
+
+                # Formato del encabezado
+                format_header = workbook.add_format({
+                    'bold': True,
+                    'bg_color': '#000000',
+                    'font_color': 'white',
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'border': 1
+                })
+
+                # Formato celdas normales con borde
+                format_border = workbook.add_format({'border': 1})
+
+                # Formato dinero
+                format_money = workbook.add_format({'border': 1, 'num_format': '$#,##0.00'})
+
+                # Aplicar formato al encabezado
+                worksheet.set_row(0, 20, format_header)
+
+                # Ajuste de columnas
+                for col_num, col_name in enumerate(resumen.columns):
+                    ancho = max(resumen[col_name].astype(str).map(len).max(), len(str(col_name))) + 2
+                    if "$" in col_name:
+                        worksheet.set_column(col_num, col_num, ancho, format_money)
+                    else:
+                        worksheet.set_column(col_num, col_num, ancho, format_border) #Hasta aqui
                 outputs[grupo] = url_for('download_file', filename=os.path.basename(nombre_archivo))
 
     return render_template_string(HTML, outputs=outputs)
