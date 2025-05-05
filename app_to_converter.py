@@ -135,32 +135,24 @@ def index():
                     workbook = writer.book
                     worksheet = writer.sheets['TO']
 
-                    # Formato del encabezado
-                    format_header = workbook.add_format({
+                    # Formato para la fila de encabezados
+                    header_format = workbook.add_format({
                         'bold': True,
-                        'bg_color': '#000000',
-                        'font_color': 'white',
+                        'text_wrap': True,
+                        'valign': 'center',
                         'align': 'center',
-                        'valign': 'vcenter',
+                        'fg_color': '#000000',   # Fondo negro
+                        'font_color': '#FFFFFF', # Texto blanco
                         'border': 1
                     })
 
-                    # Formato celdas normales con borde
-                    format_border = workbook.add_format({'border': 1})
+                    for col_num, value in enumerate(resumen.columns.values):
+                        worksheet.write(0, col_num, value, header_format)
 
-                    # Formato dinero
-                    format_money = workbook.add_format({'border': 1, 'num_format': '$#,##0.00'})
-
-                    # Aplicar formato al encabezado
-                    worksheet.set_row(0, 20, format_header)
-
-                    # Ajuste de columnas
-                    for col_num, col_name in enumerate(resumen.columns):
-                        ancho = max(resumen[col_name].astype(str).map(len).max(), len(str(col_name))) + 2
-                        if "$" in col_name:
-                            worksheet.set_column(col_num, col_num, ancho, format_money)
-                        else:
-                            worksheet.set_column(col_num, col_num, ancho, format_border) #Hasta aqui
+                    # Opcional: ajustar ancho automático de columnas
+                    for i, col in enumerate(resumen.columns):
+                        max_len = max(resumen[col].astype(str).map(len).max(), len(col)) + 2
+                        worksheet.set_column(i, i, max_len) #Hasta aqui
                 outputs[grupo] = url_for('download_file', filename=os.path.basename(nombre_archivo))
 
     return render_template_string(HTML, outputs=outputs)
