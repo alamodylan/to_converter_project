@@ -59,8 +59,8 @@ EXTRA_COSTOS_LIST = [
     "Gen Set Diario",
     "Demora de Chasis Equipo Especial",
     "Choferes Quimiquero",
-    "Diesel para viaje"
-    "Estadía en Chasis 3 Ejes"
+    "Diesel para viaje",
+    "Estadía en chasis 3 ejes"  # ← nuevo agregado
 ]
 
 def clasificar_to(fila):
