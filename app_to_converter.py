@@ -60,8 +60,15 @@ EXTRA_COSTOS_LIST = [
     "Demora de Chasis Equipo Especial",
     "Choferes Quimiquero",
     "Diesel para viaje",
-    "Estadía en Chasis 3 Ejes"  # ← nuevo agregado
+    "Estadía en Chasis 3 Ejes"
 ]
+
+TARIFAS_DIARIAS = {
+    "Demora de Chasis Sencillo": 45,
+    "Demora de Chasis Equipo Especial": 75,
+    "Estadía en Chasis 3 Ejes": 75,
+    "Gen Set Diario": 40
+}
 
 def clasificar_to(fila):
     ruta = str(fila.get("Ruta", "")).strip()
@@ -101,13 +108,14 @@ def index():
                     "PUERTO DE SALIDA": x.iloc[0]["Origen"],
                     "DIRECCIÓN DE COLOCACIÓN": x.iloc[0]["Ubicación Final"],
                     "ENTREGA DE VACIO": obtener_entrega_vacio(x),
-                    "COSTO FLETE $": obtener_monto(x, tipo="Guía"),
+                    "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="Retira vacio export"),
                     "PATIO DE RETIRO $": obtener_patio_retiro(x),
                     "3 EJES $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes"),
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
                     "MONTO TOTAL $": 0,
-                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"]).date()
+                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"]).date(),
+                    "COMENTARIOS TTA": obtener_comentarios_tta(x)
                 })).reset_index()
 
                 resumen["MONTO TOTAL $"] = resumen[[
@@ -117,7 +125,6 @@ def index():
                 resumen.insert(0, "CLIENTE", "")
                 resumen.insert(2, "TAMAÑO", "")
                 resumen.insert(3, "FECHA DE COLOCACIÓN", resumen.pop("FECHA DE COLOCACIÓN"))
-                resumen["COMENTARIOS TTA"] = ""
                 resumen["COMENTARIOS MSC"] = ""
 
                 cols_finales = [
@@ -135,24 +142,23 @@ def index():
                     workbook = writer.book
                     worksheet = writer.sheets['TO']
 
-                    # Formato para la fila de encabezados
                     header_format = workbook.add_format({
                         'bold': True,
                         'text_wrap': True,
                         'valign': 'center',
                         'align': 'center',
-                        'fg_color': '#000000',   # Fondo negro
-                        'font_color': '#FFFFFF', # Texto blanco
+                        'fg_color': '#000000',
+                        'font_color': '#FFFFFF',
                         'border': 1
                     })
 
                     for col_num, value in enumerate(resumen.columns.values):
                         worksheet.write(0, col_num, value, header_format)
 
-                    # Opcional: ajustar ancho automático de columnas
                     for i, col in enumerate(resumen.columns):
                         max_len = max(resumen[col].astype(str).map(len).max(), len(col)) + 2
-                        worksheet.set_column(i, i, max_len) #Hasta aqui
+                        worksheet.set_column(i, i, max_len)
+
                 outputs[grupo] = url_for('download_file', filename=os.path.basename(nombre_archivo))
 
     return render_template_string(HTML, outputs=outputs)
@@ -176,10 +182,12 @@ def obtener_entrega_vacio(df):
         return vacio.iloc[0]["Ubicación Final"]
     return ""
 
-def obtener_monto(df, tipo, servicio=None, servicio_prefix=None):
+def obtener_monto(df, tipo, servicio=None, servicio_prefix=None, exclude_servicio=None):
     f = df[df["Tipo"] == tipo]
     if servicio:
         f = f[f["Tipo Servicio"] == servicio]
+    if exclude_servicio:
+        f = f[f["Tipo Servicio"] != exclude_servicio]
     if servicio_prefix:
         f = f[f["Tipo Servicio"].astype(str).str.startswith(servicio_prefix)]
     return f["Monto"].astype(float).sum()
@@ -192,6 +200,25 @@ def obtener_extra_costos(df):
     f = df[df["Tipo Servicio"].isin(EXTRA_COSTOS_LIST)]
     return f["Monto"].astype(float).sum()
 
+def obtener_comentarios_tta(df):
+    comentarios = []
+    if obtener_monto(df, tipo="Guía", exclude_servicio="Retira vacio export") > 0:
+        comentarios.append("Flete")
+    if obtener_patio_retiro(df) > 0:
+        comentarios.append("Patio de Retiro")
+    if obtener_monto(df, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes") > 0:
+        comentarios.append("3 Ejes")
+    if obtener_monto(df, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT") > 0:
+        comentarios.append("Retorno")
+    adicionales = df[df["Tipo Servicio"].isin(TARIFAS_DIARIAS.keys())]
+    for _, row in adicionales.iterrows():
+        servicio = row["Tipo Servicio"]
+        monto = float(row["Monto"])
+        dias = int(round(monto / TARIFAS_DIARIAS[servicio]))
+        comentarios.append(f"{servicio} ({dias} días)")
+    return " | ".join(comentarios)
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
+
