@@ -202,6 +202,7 @@ def obtener_extra_costos(df):
 
 def obtener_comentarios_tta(df):
     comentarios = []
+
     if obtener_monto(df, tipo="Guía", exclude_servicio="RETIRA VACIO EXPORT") > 0:
         comentarios.append("Flete")
     if obtener_patio_retiro(df) > 0:
@@ -210,12 +211,22 @@ def obtener_comentarios_tta(df):
         comentarios.append("3 Ejes")
     if obtener_monto(df, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT") > 0:
         comentarios.append("Retorno")
+
     adicionales = df[df["Tipo Servicio"].isin(TARIFAS_DIARIAS.keys())]
     for _, row in adicionales.iterrows():
         servicio = row["Tipo Servicio"]
         monto = float(row["Monto"])
         dias = int(round(monto / TARIFAS_DIARIAS[servicio]))
         comentarios.append(f"{servicio} ({dias} días)")
+
+    # ⬇️ Agregamos IMO si aplica
+    imo_monto = df[
+        (df["Tipo"] == "Cargo Adicional Guía") &
+        (df["Tipo Servicio"].str.strip().str.upper() == "CHOFERES QUIMIQUEROS")
+    ]["Monto"].astype(float).sum()
+    if imo_monto > 0:
+        comentarios.append("IMO")
+
     return " | ".join(comentarios)
 
 if __name__ == '__main__':
