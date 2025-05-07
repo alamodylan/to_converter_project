@@ -181,13 +181,13 @@ def obtener_entrega_vacio(df):
     return ""
 
 def obtener_monto(df, tipo=None, servicio=None, servicio_prefix=None, exclude_servicio=None):
-    f = df
+    f = df.copy()
+    if exclude_servicio:
+        f = f[f["Tipo Servicio"] != exclude_servicio]
     if tipo:
         f = f[f["Tipo"] == tipo]
     if servicio:
         f = f[f["Tipo Servicio"] == servicio]
-    if exclude_servicio:
-        f = f[f["Tipo Servicio"] != exclude_servicio]
     if servicio_prefix:
         f = f[f["Tipo Servicio"].astype(str).str.startswith(servicio_prefix)]
     return f["Monto"].astype(float).sum()
