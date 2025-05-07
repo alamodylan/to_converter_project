@@ -221,9 +221,8 @@ def obtener_comentarios_tta(df):
 
     # ⬇️ Agregamos IMO si aplica
     imo_monto = df[
-        (df["Tipo"] == "Cargo Adicional Guía") &
-        (df["Tipo Servicio"].str.strip().str.upper() == "Choferes Quimiquero")
-    ]["Monto"].astype(float).sum()
+    (df["Tipo Servicio"].astype(str).str.strip().str.lower() == "choferes quimiquero")
+]["Monto"].astype(float).sum()
     if imo_monto > 0:
         comentarios.append("IMO")
 
