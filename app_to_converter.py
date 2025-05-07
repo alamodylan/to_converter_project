@@ -1,5 +1,3 @@
-# app_to_converter.py - Proyecto completo con ajuste de encabezado y columna de FECHA DE COLOCACIÓN
-
 from flask import Flask, render_template_string, request, send_file, redirect, url_for
 import pandas as pd
 import io
@@ -8,7 +6,6 @@ import os
 
 app = Flask(__name__)
 
-# HTML embebido con Bootstrap
 HTML = """
 <!DOCTYPE html>
 <html lang=\"es\">
@@ -109,7 +106,7 @@ def index():
                     "DIRECCIÓN DE COLOCACIÓN": x.iloc[0]["Ubicación Final"],
                     "ENTREGA DE VACIO": obtener_entrega_vacio(x),
                     "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="Retira vacio export"),
-                    "PATIO DE RETIRO $": obtener_monto(x, tipo="Guía", servicio="Retira vacio export"),
+                    "PATIO DE RETIRO $": obtener_monto(x, servicio="Retira vacio export"),
                     "3 EJES $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes"),
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
@@ -183,8 +180,10 @@ def obtener_entrega_vacio(df):
         return vacio.iloc[0]["Ubicación Final"]
     return ""
 
-def obtener_monto(df, tipo, servicio=None, servicio_prefix=None, exclude_servicio=None):
-    f = df[df["Tipo"] == tipo]
+def obtener_monto(df, tipo=None, servicio=None, servicio_prefix=None, exclude_servicio=None):
+    f = df
+    if tipo:
+        f = f[f["Tipo"] == tipo]
     if servicio:
         f = f[f["Tipo Servicio"] == servicio]
     if exclude_servicio:
@@ -222,4 +221,3 @@ def obtener_comentarios_tta(df):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
-
