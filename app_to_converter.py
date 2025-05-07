@@ -111,7 +111,7 @@ def index():
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
                     "MONTO TOTAL $": 0,
-                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"]).date(),
+                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"]).normalize(),
                     "COMENTARIOS TTA": obtener_comentarios_tta(x)
                 })).reset_index()
 
