@@ -105,8 +105,8 @@ def index():
                     "PUERTO DE SALIDA": x.iloc[0]["Origen"],
                     "DIRECCIÓN DE COLOCACIÓN": x.iloc[0]["Ubicación Final"],
                     "ENTREGA DE VACIO": obtener_entrega_vacio(x),
-                    "PATIO DE RETIRO $": obtener_monto(x, servicio="Retira vacio export"),
-                    "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="Retira vacio export"),
+                    "PATIO DE RETIRO $": obtener_monto(x, servicio="RETIRA VACIO EXPORT"),
+                    "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="RETIRA VACIO EXPORT"),
                     "3 EJES $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes"),
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
@@ -193,7 +193,7 @@ def obtener_monto(df, tipo=None, servicio=None, servicio_prefix=None, exclude_se
     return f["Monto"].astype(float).sum()
 
 def obtener_patio_retiro(df):
-    f = df[(df["Tipo"] == "Guía") & (df["Tipo Servicio"] == "Retira vacio export")]
+    f = df[(df["Tipo"] == "Guía") & (df["Tipo Servicio"] == "RETIRA VACIO EXPORT")]
     return f["Monto"].astype(float).sum()
 
 def obtener_extra_costos(df):
@@ -202,7 +202,7 @@ def obtener_extra_costos(df):
 
 def obtener_comentarios_tta(df):
     comentarios = []
-    if obtener_monto(df, tipo="Guía", exclude_servicio="Retira vacio export") > 0:
+    if obtener_monto(df, tipo="Guía", exclude_servicio="RETIRA VACIO EXPORT") > 0:
         comentarios.append("Flete")
     if obtener_patio_retiro(df) > 0:
         comentarios.append("Patio de Retiro")
