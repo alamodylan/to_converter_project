@@ -3,6 +3,7 @@ import pandas as pd
 import io
 import datetime
 import os
+import re
 
 app = Flask(__name__)
 
@@ -103,15 +104,15 @@ def index():
                 resumen = df_grupo.groupby("Contenedor").apply(lambda x: pd.Series({
                     "BL o BOOKING": extraer_booking(x),
                     "PUERTO DE SALIDA": x.iloc[0]["Origen"],
-                    "DIRECCIÓN DE COLOCACIÓN": x.iloc[0]["Ubicación Final"],
-                    "ENTREGA DE VACIO": obtener_entrega_vacio(x),
+                    "DIRECCIÓN DE COLOCACIÓN": obtener_direccion_colocacion(x),
+                    "ENTREGA DE VACIO": x.iloc[0]["Ubicación Final"],
                     "PATIO DE RETIRO $": obtener_monto(x, servicio="RETIRA VACIO EXPORT"),
                     "COSTO FLETE $": obtener_monto(x, tipo="Guía", exclude_servicio="RETIRA VACIO EXPORT"),
                     "3 EJES $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio="Sobre Peso 3 ejes"),
                     "RETORNO $": obtener_monto(x, tipo="Cargo Adicional Guía", servicio_prefix="SJO-RT"),
                     "EXTRA COSTOS $": obtener_extra_costos(x),
                     "MONTO TOTAL $": 0,
-                    "FECHA DE COLOCACIÓN": pd.to_datetime(x.iloc[0]["Fecha y Hora Llegada"], dayfirst=True).date(),
+                    "FECHA DE COLOCACIÓN": pd.to_datetime(x[x["Tipo"] == "Guía"].iloc[0]["Fecha y Hora Llegada"], dayfirst=True).date(),
                     "COMENTARIOS TTA": obtener_comentarios_tta(x)
                 })).reset_index()
 
@@ -191,6 +192,15 @@ def obtener_monto(df, tipo=None, servicio=None, servicio_prefix=None, exclude_se
     if servicio_prefix:
         f = f[f["Tipo Servicio"].astype(str).str.startswith(servicio_prefix)]
     return f["Monto"].astype(float).sum()
+
+def obtener_direccion_colocacion(df):
+    notas_guia = df[df["Tipo"] == "Guía"]["Notas"].astype(str)
+
+    for nota in notas_guia:
+        match = re.search(r'Descarga(.*?)\*', nota, re.IGNORECASE)
+        if match:
+            return match.group(1).strip()
+    return ""
 
 def obtener_patio_retiro(df):
     f = df[(df["Tipo"] == "Guía") & (df["Tipo Servicio"] == "RETIRA VACIO EXPORT")]
